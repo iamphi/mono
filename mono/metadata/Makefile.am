@@ -89,7 +89,11 @@ if !ENABLE_ILGEN
 ilgen_libraries = libmono-ilgen.la
 endif
 
-noinst_LTLIBRARIES = libmonoruntime-config.la $(boehm_libraries) $(sgen_libraries)
+if !HOST_WIN32
+sysnat_libraries = libmonosysnat.la
+endif
+
+noinst_LTLIBRARIES = libmonoruntime-config.la $(boehm_libraries) $(sgen_libraries) $(sysnat_libraries)
 
 lib_LTLIBRARIES = $(icall_table_libraries) $(ilgen_libraries)
 
@@ -367,11 +371,11 @@ sgen_sources = \
 
 libmonoruntime_la_SOURCES = $(common_sources) $(icall_tables_sources) $(ilgen_sources) $(gc_dependent_sources) $(null_gc_sources) $(boehm_sources)
 libmonoruntime_la_CFLAGS = $(BOEHM_DEFINES)
-libmonoruntime_la_LIBADD = libmonoruntime-config.la
+libmonoruntime_la_LIBADD = libmonoruntime-config.la $(sysnat_libraries)
 
 libmonoruntimesgen_la_SOURCES = $(common_sources) $(icall_tables_sources) $(ilgen_sources) $(gc_dependent_sources) $(sgen_sources)
 libmonoruntimesgen_la_CFLAGS = $(SGEN_DEFINES)
-libmonoruntimesgen_la_LIBADD = libmonoruntime-config.la
+libmonoruntimesgen_la_LIBADD = libmonoruntime-config.la $(sysnat_libraries)
 
 libmonoruntimeincludedir = $(includedir)/mono-$(API_VER)/mono/metadata
 
@@ -403,6 +407,30 @@ libmonoruntimeinclude_HEADERS = \
 	threads.h		\
 	tokentype.h		\
 	verify.h		
+
+libmonosysnat_la_SOURCES = \
+	pal_config.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/Common/pal_compiler.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/Common/pal_safecrt.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/Common/pal_types.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/Common/pal_utilities.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_errno.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_errno.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_io.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_io.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_maphardwaretype.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_maphardwaretype.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_memory.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_memory.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_networking.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_networking.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_networkstatistics.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_networkstatistics.h \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_tcpstate.c \
+	$(srcdir)/../../external/corefx/src/Native/Unix/System.Native/pal_tcpstate.h
+
+libmonosysnat_la_CFLAGS = -I$(srcdir)/../../external/corefx/src/Native/Unix/Common -I$(srcdir)/../../external/corefx/src/Native/Unix/System.Native -Wno-typedef-redefinition -Wno-missing-prototypes
+
 
 EXTRA_DIST = $(win32_sources) $(unix_sources) $(null_sources) runtime.h \
 		threadpool-io-poll.c threadpool-io-epoll.c threadpool-io-kqueue.c sgen-dynarray.h
